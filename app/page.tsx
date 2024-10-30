@@ -17,9 +17,7 @@ export default function Home() {
 
         <div className="text-center text-sm text-muted-foreground">
           <p>
-            Note: This is a simplified demonstration. For production use, 
-            a more sophisticated machine learning model would be required 
-            for accurate accent analysis.
+            Note: This is a simplified demonstration. SuperPemo LLC.
           </p>
         </div>
       </div>

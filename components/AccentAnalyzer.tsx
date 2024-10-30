@@ -20,19 +20,24 @@ export function AccentAnalyzer() {
 
   const startListening = async () => {
     try {
-      if (!('webkitSpeechRecognition' in window)) {
-        throw new Error('Speech recognition is not supported in this browser');
+      const SpeechRecognitionConstructor =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+      if (!SpeechRecognitionConstructor) {
+        throw new Error(
+          'Speech recognition is not supported in this browser. Please use a compatible browser like Google Chrome.'
+        );
       }
 
-      const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      const recognition: SpeechRecognition = new SpeechRecognition();
+      const recognition: SpeechRecognition = new SpeechRecognitionConstructor();
       
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = 'zh-CN';
+      recognition.lang = 'zh-TW';
 
       recognition.onstart = () => {
         setIsListening(true);
+        console.log('Speech recognition started');
         setError(null);
       };
 
@@ -40,25 +45,31 @@ export function AccentAnalyzer() {
         const transcript = event.results[0][0].transcript;
         const confidence = Math.round(event.results[0][0].confidence * 100);
         
-        const taiwanesePatterns = /[㆐-㆞]/;
-        const isTaiwanese = taiwanesePatterns.test(transcript) || 
-                           confidence > 90;
+        const taiwanesePatterns = /[\u3105-\u3129]/;
+        const isTaiwanese = taiwanesePatterns.test(transcript) || confidence > 90;
         
         setResult(isTaiwanese ? 'Taiwanese' : 'Chinese Mainland');
         setConfidence(confidence);
       };
 
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        setError('Error occurred during recognition: ' + event.error);
+        console.error('Speech Recognition Error:', event);
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          setError('Microphone access was denied. Please allow microphone access and try again.');
+        } else {
+          setError('Error occurred during recognition: ' + event.error);
+        }
         setIsListening(false);
       };
 
       recognition.onend = () => {
         setIsListening(false);
+        console.log('Speech recognition ended');
       };
 
       recognition.start();
     } catch (err) {
+      console.error('Start Listening Error:', err);
       setError((err as Error).message);
       setIsListening(false);
     }
